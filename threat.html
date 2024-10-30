@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STRIDE and DREAD Threat Assessment</title>
+    <title>Threat Assessment Form</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .section { margin-bottom: 30px; }
@@ -18,12 +18,12 @@
     </style>
 </head>
 <body>
-    <h1>STRIDE and DREAD Threat Assessment Form</h1>
+    <h1>Threat Assessment Form</h1>
 
     <div class="section">
-        <h2>STRIDE Threat Identification</h2>
+        <h2>Threat Identification</h2>
         <label for="asset">Asset:</label>
-        <select id="asset" onchange="showStrideOptions()">
+        <select id="asset" onchange="showThreatOptions()">
             <option value="">Select an Asset</option>
             <option value="Server">Server</option>
             <option value="Database">Database</option>
@@ -31,14 +31,14 @@
             <option value="API External">API External</option>
         </select>
 
-        <label for="stride-threat">Potential Threat (STRIDE Case):</label>
-        <select id="stride-threat">
+        <label for="threat-case">Potential Threat Case:</label>
+        <select id="threat-case">
             <option value="">Select a Threat Case</option>
         </select>
 
-        <div id="examples" class="examples" style="display: none;"></div>
+        <!-- <div id="examples" class="examples" style="display: none;"></div> -->
 
-        <button onclick="addStrideThreat()">Add STRIDE Threat</button>
+        <button onclick="addThreat()">Add Threat</button>
     </div>
 
     <div class="section">
@@ -67,8 +67,10 @@
         <thead>
             <tr>
                 <th>Asset</th>
-                <th>Threat Case (STRIDE)</th>
+                <th>Threat Case</th>
+                <th>STRIDE</th>
                 <th>DREAD Score</th>
+                <th>Mitigation Strategy</th>
             </tr>
         </thead>
         <tbody id="results"></tbody>
@@ -77,86 +79,168 @@
     <script>
         const threatsByAsset = {
             'Server': [
-                { case: 'An attacker impersonates a legitimate admin to gain access to server controls (Spoofing).' },
-                { case: 'Modifying server configuration files to redirect traffic (Tampering).' },
-                { case: 'An admin denies making changes to the server settings (Repudiation).' },
-                { case: 'Server logs are accessed by unauthorized users (Information Disclosure).' },
-                { case: 'A DDoS attack renders the server inaccessible (Denial of Service).' },
-                { case: 'A regular user exploits a vulnerability to gain root access (Elevation of Privilege).' }
+                { 
+                    case: 'An attacker impersonates a legitimate admin to gain access to server controls.',
+                    stride: 'Spoofing',
+                    mitigation: 'Implement strong authentication methods, such as multi-factor authentication (MFA).'
+                },
+                { 
+                    case: 'Modifying server configuration files to redirect traffic.',
+                    stride: 'Tampering',
+                    mitigation: 'Use file integrity monitoring and regular audits of configuration files.'
+                },
+                { 
+                    case: 'An admin denies making changes to the server settings.',
+                    stride: 'Repudiation',
+                    mitigation: 'Enable logging and provide non-repudiation features for all critical actions.'
+                },
+                { 
+                    case: 'Server logs are accessed by unauthorized users.',
+                    stride: 'Information Disclosure',
+                    mitigation: 'Restrict access to logs and encrypt sensitive log data.'
+                },
+                { 
+                    case: 'A DDoS attack renders the server inaccessible.',
+                    stride: 'Denial of Service',
+                    mitigation: 'Deploy DDoS protection services and configure rate limiting.'
+                },
+                { 
+                    case: 'A regular user exploits a vulnerability to gain root access.',
+                    stride: 'Elevation of Privilege',
+                    mitigation: 'Regularly update server software and conduct security training for users.'
+                }
             ],
             'Database': [
-                { case: 'An attacker impersonates a database admin to access sensitive data (Spoofing).' },
-                { case: 'Modifying records in the database to alter financial transactions (Tampering).' },
-                { case: 'A user denies inserting malicious data into the database (Repudiation).' },
-                { case: 'Sensitive customer information is leaked from the database (Information Disclosure).' },
-                { case: 'An attacker floods the database with queries, slowing it down (Denial of Service).' },
-                { case: 'A user exploits a flaw to gain access to admin controls of the database (Elevation of Privilege).' }
+                { 
+                    case: 'An attacker impersonates a database admin to access sensitive data.',
+                    stride: 'Spoofing',
+                    mitigation: 'Utilize role-based access control and secure admin credentials.'
+                },
+                { 
+                    case: 'Modifying records in the database to alter financial transactions.',
+                    stride: 'Tampering',
+                    mitigation: 'Implement database access controls and use transaction logs for auditing.'
+                },
+                { 
+                    case: 'A user denies inserting malicious data into the database.',
+                    stride: 'Repudiation',
+                    mitigation: 'Enable comprehensive logging of all database operations.'
+                },
+                { 
+                    case: 'Sensitive customer information is leaked from the database.',
+                    stride: 'Information Disclosure',
+                    mitigation: 'Encrypt sensitive data at rest and in transit.'
+                },
+                { 
+                    case: 'An attacker floods the database with queries, slowing it down.',
+                    stride: 'Denial of Service',
+                    mitigation: 'Implement query optimization and rate limiting for API access.'
+                },
+                { 
+                    case: 'A user exploits a flaw to gain access to admin controls of the database.',
+                    stride: 'Elevation of Privilege',
+                    mitigation: 'Regularly patch and update database software to fix vulnerabilities.'
+                }
             ],
             'User Data': [
-                { case: 'An attacker impersonates a legitimate user to access personal information (Spoofing).' },
-                { case: 'Modifying user data to impersonate another user (Tampering).' },
-                { case: 'A user denies having shared their personal data (Repudiation).' },
-                { case: 'Unauthorized access to user data results in privacy breaches (Information Disclosure).' },
-                { case: 'An attack prevents users from accessing their accounts (Denial of Service).' },
-                { case: 'A regular user exploits a vulnerability to access admin user data (Elevation of Privilege).' }
+                { 
+                    case: 'An attacker impersonates a legitimate user to access personal information.',
+                    stride: 'Spoofing',
+                    mitigation: 'Implement strong user authentication and account recovery processes.'
+                },
+                { 
+                    case: 'Modifying user data to impersonate another user.',
+                    stride: 'Tampering',
+                    mitigation: 'Use cryptographic signatures to verify data integrity.'
+                },
+                { 
+                    case: 'A user denies having shared their personal data.',
+                    stride: 'Repudiation',
+                    mitigation: 'Keep clear consent records and provide audit trails for data sharing.'
+                },
+                { 
+                    case: 'Unauthorized access to user data results in privacy breaches.',
+                    stride: 'Information Disclosure',
+                    mitigation: 'Implement strict access controls and data masking techniques.'
+                },
+                { 
+                    case: 'An attack prevents users from accessing their accounts.',
+                    stride: 'Denial of Service',
+                    mitigation: 'Use rate limiting and bot protection measures.'
+                },
+                { 
+                    case: 'A regular user exploits a vulnerability to access admin user data.',
+                    stride: 'Elevation of Privilege',
+                    mitigation: 'Conduct regular security reviews and user permissions audits.'
+                }
             ],
             'API External': [
-                { case: 'An attacker uses stolen API keys to impersonate a legitimate service (Spoofing).' },
-                { case: 'Modifying requests to an API to gain unauthorized access (Tampering).' },
-                { case: 'A user denies making API calls that resulted in data loss (Repudiation).' },
-                { case: 'Sensitive information is exposed via API responses (Information Disclosure).' },
-                { case: 'An attacker overwhelms the API with requests, causing it to crash (Denial of Service).' },
-                { case: 'A user exploits API vulnerabilities to access admin-level functions (Elevation of Privilege).' }
+                { 
+                    case: 'An attacker uses stolen API keys to impersonate a legitimate service.',
+                    stride: 'Spoofing',
+                    mitigation: 'Rotate API keys regularly and implement IP whitelisting.'
+                },
+                { 
+                    case: 'Modifying requests to an API to gain unauthorized access.',
+                    stride: 'Tampering',
+                    mitigation: 'Use HTTPS for all API calls and validate all inputs on the server side.'
+                },
+                { 
+                    case: 'A user denies making API calls that resulted in data loss.',
+                    stride: 'Repudiation',
+                    mitigation: 'Maintain logs of API usage and provide accountability features.'
+                },
+                { 
+                    case: 'Sensitive information is exposed via API responses.',
+                    stride: 'Information Disclosure',
+                    mitigation: 'Limit the information returned by APIs and implement data encryption.'
+                },
+                { 
+                    case: 'An attacker overwhelms the API with requests, causing it to crash.',
+                    stride: 'Denial of Service',
+                    mitigation: 'Use rate limiting and API throttling to prevent abuse.'
+                },
+                { 
+                    case: 'A user exploits API vulnerabilities to access admin-level functions.',
+                    stride: 'Elevation of Privilege',
+                    mitigation: 'Regularly test APIs for vulnerabilities and implement proper access controls.'
+                }
             ]
         };
 
-        function showStrideOptions() {
+        function showThreatOptions() {
             const asset = document.getElementById('asset').value;
-            const strideThreatSelect = document.getElementById('stride-threat');
-            strideThreatSelect.innerHTML = '<option value="">Select a Threat Case</option>'; // Clear previous options
+            const threatCaseSelect = document.getElementById('threat-case');
+            threatCaseSelect.innerHTML = '<option value="">Select a Threat Case</option>'; // Clear previous options
 
             if (asset) {
                 threatsByAsset[asset].forEach(threat => {
                     const option = document.createElement('option');
-                    option.value = threat.case; // Using the case description as the value
-                    option.textContent = threat.case; // Using the case description as the display text
-                    strideThreatSelect.appendChild(option);
+                    option.value = threat.case;
+                    option.textContent = threat.case;
+                    threatCaseSelect.appendChild(option);
                 });
-            }
 
-            clearExamples();
-        }
-
-        function clearExamples() {
-            document.getElementById('examples').style.display = 'none';
-        }
-
-        document.getElementById('stride-threat').addEventListener('change', function() {
-            const selectedThreat = this.value;
-            const examplesDiv = document.getElementById('examples');
-
-            if (selectedThreat) {
-                examplesDiv.style.display = 'block';
-                examplesDiv.textContent = selectedThreat; // Display the selected case directly
+                document.getElementById('examples').style.display = 'block';
+                document.getElementById('examples').innerHTML = "Example Cases for " + asset + ":<br>" + threatsByAsset[asset].map(threat => threat.case).join("<br>");
             } else {
-                examplesDiv.style.display = 'none';
+                document.getElementById('examples').style.display = 'none';
             }
-        });
+        }
 
-        function addStrideThreat() {
+        function addThreat() {
             const asset = document.getElementById('asset').value;
-            const strideThreat = document.getElementById('stride-threat').value;
+            const threatCase = document.getElementById('threat-case').value;
+            const threatInfo = threatsByAsset[asset].find(threat => threat.case === threatCase);
             const results = document.getElementById('results');
-
-            // Add a new row to the results table
             const newRow = results.insertRow();
-            const assetCell = newRow.insertCell(0);
-            const threatCell = newRow.insertCell(1);
-            const dreadScoreCell = newRow.insertCell(2);
-
-            assetCell.textContent = asset;
-            threatCell.textContent = strideThreat;
-            dreadScoreCell.textContent = 'N/A'; // Placeholder for DREAD score
+            
+            // Insert cells for Asset, Threat Case, STRIDE, DREAD Score, and Mitigation Strategy
+            newRow.insertCell(0).textContent = asset;
+            newRow.insertCell(1).textContent = threatCase;
+            newRow.insertCell(2).textContent = threatInfo.stride; // STRIDE column
+            newRow.insertCell(3).textContent = 'TBD'; // Placeholder for DREAD score
+            newRow.insertCell(4).textContent = threatInfo.mitigation; // Mitigation Strategy
         }
 
         function calculateDreadScore() {
@@ -181,7 +265,7 @@
             // Update the last row with the calculated DREAD score
             const lastRow = results.rows[results.rows.length - 1];
             if (lastRow) {
-                lastRow.cells[2].textContent = dreadScore; // Update the DREAD score in the last row
+                lastRow.cells[3].textContent = dreadScore; // Update the DREAD score in the last row
             }
         }
     </script>
