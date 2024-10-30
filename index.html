@@ -3,187 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <title>Enkripsi dan Dekripsi</title>
+    <title>Akses File</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background-color: #f8f9fa;
+            height: 100vh;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
         }
+
         .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
+            text-align: center;
         }
-        .result-box {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #e9ecef;
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
             border-radius: 5px;
+            transition: background-color 0.3s ease;
         }
-        .btn-custom {
-            background-color: #007bff;
-            color: white;
+
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center mb-4">Enkripsi dan Dekripsi</h1>
-        <form id="cryptoForm">
-            <div class="mb-3">
-                <label for="algorithm" class="form-label">Pilih Algoritma:</label>
-                <select id="algorithm" name="algorithm" class="form-select" required>
-                    <option value="AES" selected>AES</option>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="user_key" class="form-label">Kunci:</label>
-                <input type="text" id="user_key" name="user_key" class="form-control" placeholder="Masukkan kunci" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="plain_text" class="form-label">Teks:</label>
-                <input type="text" id="plain_text" name="plain_text" class="form-control" placeholder="Masukkan teks untuk dienkripsi" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="cipher_text" class="form-label">Teks Terenkripsi:</label>
-                <input type="text" id="cipher_text" name="cipher_text" class="form-control" placeholder="Masukkan teks terenkripsi untuk dekripsi">
-            </div>
-
-            <div class="text-center">
-                <button type="button" id="encryptButton" class="btn btn-custom mx-2">Enkripsi</button>
-                <button type="button" id="decryptButton" class="btn btn-outline-secondary mx-2">Dekripsi</button>
-                <button type="button" id="downloadButton" class="btn btn-success mx-2">Download Encrypted Text and Key</button>
-            </div>
-        </form>
-
-        <div class="result-box">
-            <h2>Hasil:</h2>
-            <p><strong>Encrypted Text:</strong> <span id="encryptedText"></span></p>
-            <p><strong>Decrypted Text:</strong> <span id="decryptedText"></span></p>
-        </div>
+        <button onclick="window.location.href='cipher.html'">Tugas 1 Enkripsi</button>
+        <button onclick="window.location.href='threat.html'">Tugas 2 Threat Modelling</button>
     </div>
-
-    <script>
-        // Utility function to convert a string to an ArrayBuffer
-        function stringToArrayBuffer(str) {
-            const encoder = new TextEncoder();
-            return encoder.encode(str);
-        }
-
-        // Utility function to convert an ArrayBuffer to a string
-        function arrayBufferToString(buffer) {
-            const decoder = new TextDecoder();
-            return decoder.decode(buffer);
-        }
-
-        // Function to derive a key from a user-defined key
-        async function deriveKey(userKey) {
-            const enc = new TextEncoder();
-            const keyMaterial = await window.crypto.subtle.importKey(
-                'raw', 
-                enc.encode(userKey), 
-                { name: 'PBKDF2' }, 
-                false, 
-                ['deriveKey']
-            );
-
-            return await window.crypto.subtle.deriveKey(
-                {
-                    name: 'PBKDF2',
-                    salt: enc.encode('salt'), // Replace with a secure random salt in production
-                    iterations: 1000,
-                    hash: 'SHA-256'
-                },
-                keyMaterial,
-                { name: 'AES-GCM', length: 256 },
-                false,
-                ['encrypt', 'decrypt']
-            );
-        }
-
-        // Function to encrypt the plaintext
-        async function encrypt(plainText, userKey) {
-            const key = await deriveKey(userKey);
-            const iv = window.crypto.getRandomValues(new Uint8Array(12)); // AES GCM IV
-
-            const cipherText = await window.crypto.subtle.encrypt(
-                { name: 'AES-GCM', iv: iv },
-                key,
-                stringToArrayBuffer(plainText)
-            );
-
-            const combined = new Uint8Array(iv.length + cipherText.byteLength);
-            combined.set(iv, 0);
-            combined.set(new Uint8Array(cipherText), iv.length);
-            return btoa(String.fromCharCode(...combined));
-        }
-
-        // Function to decrypt the ciphertext
-        async function decrypt(cipherText, userKey) {
-            const combined = Uint8Array.from(atob(cipherText), c => c.charCodeAt(0));
-            const iv = combined.slice(0, 12);
-            const cipherBytes = combined.slice(12);
-
-            const key = await deriveKey(userKey);
-            const plainText = await window.crypto.subtle.decrypt(
-                { name: 'AES-GCM', iv: iv },
-                key,
-                cipherBytes
-            );
-
-            return arrayBufferToString(plainText);
-        }
-
-        // Function to download both encrypted text and the key as a file
-        function downloadFile(content, filename) {
-            const blob = new Blob([content], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
-        }
-
-        // Event listeners for buttons
-        document.getElementById('encryptButton').addEventListener('click', async () => {
-            const plainText = document.getElementById('plain_text').value;
-            const userKey = document.getElementById('user_key').value;
-
-            const encryptedText = await encrypt(plainText, userKey);
-            document.getElementById('encryptedText').innerText = encryptedText;
-        });
-
-        document.getElementById('decryptButton').addEventListener('click', async () => {
-            const cipherText = document.getElementById('cipher_text').value;
-            const userKey = document.getElementById('user_key').value; // Use the user-defined key
-
-            try {
-                const decryptedText = await decrypt(cipherText, userKey);
-                document.getElementById('decryptedText').innerText = decryptedText;
-            } catch (e) {
-                document.getElementById('decryptedText').innerText = 'Error: ' + e.message;
-            }
-        });
-
-        document.getElementById('downloadButton').addEventListener('click', () => {
-            const encryptedText = document.getElementById('encryptedText').innerText;
-            const userKey = document.getElementById('user_key').value;
-            if (encryptedText) {
-                const content = `Encrypted Text: ${encryptedText}\nKey: ${userKey}`;
-                downloadFile(content, 'encrypted_data.txt');
-            } else {
-                alert('Please encrypt some text before downloading.');
-            }
-        });
-    </script>
 </body>
 </html>

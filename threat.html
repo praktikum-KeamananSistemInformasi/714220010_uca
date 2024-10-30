@@ -10,6 +10,11 @@
         label { display: block; margin: 10px 0 5px; }
         input, select { width: 100%; padding: 8px; margin-bottom: 10px; }
         button { padding: 10px 20px; background-color: #007BFF; color: white; border: none; cursor: pointer; }
+        .error { color: red; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .examples { margin-top: 10px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -18,22 +23,20 @@
     <div class="section">
         <h2>STRIDE Threat Identification</h2>
         <label for="asset">Asset:</label>
-        <select id="asset">
+        <select id="asset" onchange="showStrideOptions()">
+            <option value="">Select an Asset</option>
             <option value="Server">Server</option>
             <option value="Database">Database</option>
             <option value="User Data">User Data</option>
             <option value="API External">API External</option>
         </select>
 
-        <label for="stride-threat">Potential Threat (STRIDE):</label>
+        <label for="stride-threat">Potential Threat (STRIDE Case):</label>
         <select id="stride-threat">
-            <option value="Spoofing">Spoofing</option>
-            <option value="Tampering">Tampering</option>
-            <option value="Repudiation">Repudiation</option>
-            <option value="Information Disclosure">Information Disclosure</option>
-            <option value="Denial of Service">Denial of Service</option>
-            <option value="Elevation of Privilege">Elevation of Privilege</option>
+            <option value="">Select a Threat Case</option>
         </select>
+
+        <div id="examples" class="examples" style="display: none;"></div>
 
         <button onclick="addStrideThreat()">Add STRIDE Threat</button>
     </div>
@@ -59,14 +62,101 @@
     </div>
 
     <h3>Results:</h3>
-    <div id="results"></div>
+    <div id="error-message" class="error"></div>
+    <table id="results-table">
+        <thead>
+            <tr>
+                <th>Asset</th>
+                <th>Threat Case (STRIDE)</th>
+                <th>DREAD Score</th>
+            </tr>
+        </thead>
+        <tbody id="results"></tbody>
+    </table>
 
     <script>
+        const threatsByAsset = {
+            'Server': [
+                { case: 'An attacker impersonates a legitimate admin to gain access to server controls (Spoofing).' },
+                { case: 'Modifying server configuration files to redirect traffic (Tampering).' },
+                { case: 'An admin denies making changes to the server settings (Repudiation).' },
+                { case: 'Server logs are accessed by unauthorized users (Information Disclosure).' },
+                { case: 'A DDoS attack renders the server inaccessible (Denial of Service).' },
+                { case: 'A regular user exploits a vulnerability to gain root access (Elevation of Privilege).' }
+            ],
+            'Database': [
+                { case: 'An attacker impersonates a database admin to access sensitive data (Spoofing).' },
+                { case: 'Modifying records in the database to alter financial transactions (Tampering).' },
+                { case: 'A user denies inserting malicious data into the database (Repudiation).' },
+                { case: 'Sensitive customer information is leaked from the database (Information Disclosure).' },
+                { case: 'An attacker floods the database with queries, slowing it down (Denial of Service).' },
+                { case: 'A user exploits a flaw to gain access to admin controls of the database (Elevation of Privilege).' }
+            ],
+            'User Data': [
+                { case: 'An attacker impersonates a legitimate user to access personal information (Spoofing).' },
+                { case: 'Modifying user data to impersonate another user (Tampering).' },
+                { case: 'A user denies having shared their personal data (Repudiation).' },
+                { case: 'Unauthorized access to user data results in privacy breaches (Information Disclosure).' },
+                { case: 'An attack prevents users from accessing their accounts (Denial of Service).' },
+                { case: 'A regular user exploits a vulnerability to access admin user data (Elevation of Privilege).' }
+            ],
+            'API External': [
+                { case: 'An attacker uses stolen API keys to impersonate a legitimate service (Spoofing).' },
+                { case: 'Modifying requests to an API to gain unauthorized access (Tampering).' },
+                { case: 'A user denies making API calls that resulted in data loss (Repudiation).' },
+                { case: 'Sensitive information is exposed via API responses (Information Disclosure).' },
+                { case: 'An attacker overwhelms the API with requests, causing it to crash (Denial of Service).' },
+                { case: 'A user exploits API vulnerabilities to access admin-level functions (Elevation of Privilege).' }
+            ]
+        };
+
+        function showStrideOptions() {
+            const asset = document.getElementById('asset').value;
+            const strideThreatSelect = document.getElementById('stride-threat');
+            strideThreatSelect.innerHTML = '<option value="">Select a Threat Case</option>'; // Clear previous options
+
+            if (asset) {
+                threatsByAsset[asset].forEach(threat => {
+                    const option = document.createElement('option');
+                    option.value = threat.case; // Using the case description as the value
+                    option.textContent = threat.case; // Using the case description as the display text
+                    strideThreatSelect.appendChild(option);
+                });
+            }
+
+            clearExamples();
+        }
+
+        function clearExamples() {
+            document.getElementById('examples').style.display = 'none';
+        }
+
+        document.getElementById('stride-threat').addEventListener('change', function() {
+            const selectedThreat = this.value;
+            const examplesDiv = document.getElementById('examples');
+
+            if (selectedThreat) {
+                examplesDiv.style.display = 'block';
+                examplesDiv.textContent = selectedThreat; // Display the selected case directly
+            } else {
+                examplesDiv.style.display = 'none';
+            }
+        });
+
         function addStrideThreat() {
             const asset = document.getElementById('asset').value;
             const strideThreat = document.getElementById('stride-threat').value;
             const results = document.getElementById('results');
-            results.innerHTML += `<p>Asset: ${asset}, Threat: ${strideThreat}</p>`;
+
+            // Add a new row to the results table
+            const newRow = results.insertRow();
+            const assetCell = newRow.insertCell(0);
+            const threatCell = newRow.insertCell(1);
+            const dreadScoreCell = newRow.insertCell(2);
+
+            assetCell.textContent = asset;
+            threatCell.textContent = strideThreat;
+            dreadScoreCell.textContent = 'N/A'; // Placeholder for DREAD score
         }
 
         function calculateDreadScore() {
@@ -75,17 +165,25 @@
             const exploitability = parseInt(document.getElementById('exploitability').value);
             const affectedUsers = parseInt(document.getElementById('affectedUsers').value);
             const discoverability = parseInt(document.getElementById('discoverability').value);
+            const errorMessage = document.getElementById('error-message');
+
+            // Clear previous error message
+            errorMessage.innerHTML = '';
 
             if (isNaN(damage) || isNaN(reproducibility) || isNaN(exploitability) || isNaN(affectedUsers) || isNaN(discoverability)) {
-                alert("Please enter valid scores for all DREAD components.");
+                errorMessage.innerHTML = "Please enter valid scores for all DREAD components.";
                 return;
             }
 
             const dreadScore = damage + reproducibility + exploitability + affectedUsers + discoverability;
             const results = document.getElementById('results');
-            results.innerHTML += `<p>DREAD Score: ${dreadScore}</p>`;
+
+            // Update the last row with the calculated DREAD score
+            const lastRow = results.rows[results.rows.length - 1];
+            if (lastRow) {
+                lastRow.cells[2].textContent = dreadScore; // Update the DREAD score in the last row
+            }
         }
     </script>
 </body>
 </html>
-    
